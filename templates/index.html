@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Islamic Utility Assistant</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f9f9f9;
+        padding: 30px;
+        max-width: 800px;
+        margin: auto;
+      }
+      h1 {
+        color: #2c3e50;
+      }
+      .input-group {
+        margin-bottom: 20px;
+      }
+      textarea {
+        width: 100%;
+        height: 80px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .box {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-bottom: 20px;
+        white-space: pre-wrap;
+        font-size: 16px;
+        min-height: 50px;
+      }
+      .trace-box {
+        background: #1e1e1e;
+        color: #00ff00;
+        font-family: monospace;
+        font-size: 13px;
+      }
+      .loading {
+        color: #666;
+        font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Islamic Utility Agent</h1>
+
+    <div class="input-group">
+      <h3>Ask a question:</h3>
+      <textarea
+        id="queryInput"
+        placeholder="E.g., I have $8000 in savings. How much Zakat do I owe, and what is today's Hijri date?"
+      ></textarea>
+      <br /><br />
+      <button onclick="sendQuery()">Ask Agent</button>
+    </div>
+
+    <h3>Answer:</h3>
+    <div id="answerBox" class="box">The agent's answer will appear here...</div>
+
+    <h3>Internal Trace (Agent Thinking):</h3>
+    <div id="traceBox" class="box trace-box">
+      The tool trace will appear here...
+    </div>
+
+    <script>
+      async function sendQuery() {
+        const query = document.getElementById("queryInput").value;
+        const answerBox = document.getElementById("answerBox");
+        const traceBox = document.getElementById("traceBox");
+
+        if (!query) return;
+
+        // Show loading state
+        answerBox.innerHTML =
+          '<span class="loading">Thinking and calling tools...</span>';
+        traceBox.innerHTML = '<span class="loading">Processing...</span>';
+
+        // Send request to our FastAPI backend
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: query }),
+        });
+
+        // Display results
+        const data = await response.json();
+        answerBox.textContent = data.answer;
+        traceBox.textContent = data.trace;
+      }
+    </script>
+  </body>
+</html>
