@@ -1,10 +1,11 @@
 # ZaryahPlus Intern Task: Tool-Using Agent
 
 ## Overview
-This is a custom-built, CLI-based AI agent for an Islamic utility assistant. It utilizes a raw `while` loop to plan, act, and observe using real tools without relying on heavyweight frameworks like LangChain.
+This is a custom-built AI agent for an Islamic utility assistant, featuring a clean, responsive web UI. It utilizes a raw `while` loop to plan, act, and observe using real tools without relying on heavyweight frameworks like LangChain. The frontend is served dynamically via FastAPI, exposing both the final answers and the agent's internal reasoning trace.
 
 ## Tech Stack
-* **Language:** Python
+* **Language:** Python, HTML, CSS, JavaScript
+* **Web Framework:** FastAPI & Uvicorn
 * **AI Model:** Google Gemini 3.5 Flash (via `google-generativeai` SDK)
 * **APIs Used:** * Aladhan API (for Prayer Times and Hijri/Gregorian Date Conversion)
   * Al Quran Cloud API (for Quran Reference Lookups)
@@ -18,9 +19,11 @@ The agent includes a local Zakat calculation tool that computes obligations with
 
 ## Setup Instructions
 1. Clone this repository.
-2. Install the requirements: `pip install google-generativeai python-dotenv requests`
+2. Install the requirements: `pip install google-generativeai python-dotenv requests fastapi uvicorn jinja2`
 3. Create a `.env` file in the root directory and add your Gemini API key: `GEMINI_API_KEY="your_key_here"`
-4. Run the agent: `python agent.py`
+4. Start the web server: `python app.py`
+5. Open your web browser and navigate to `http://127.0.0.1:8000/` to interact with the agent.
+
 
 ## Mandatory Questions
 
