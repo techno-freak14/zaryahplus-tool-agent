@@ -62,6 +62,7 @@ def convert_date(date_str: str, to_hijri: bool = True) -> str:
         if len(parts) != 3 or not all(p.isdigit() for p in parts):
             return "Error: Invalid date format. Please use 'DD-MM-YYYY' (e.g., '25-12-2026')."
 
+        # Corrected endpoints for the Aladhan API
         endpoint = "gToH" if to_hijri else "hToG"
         url = f"https://api.aladhan.com/v1/{endpoint}?date={date_str}"
         
@@ -98,9 +99,9 @@ def lookup_quran_verse(reference: str) -> str:
             return f"Error: Could not find a verse matching reference '{reference}'. Please check the chapter and verse numbers."
             
         data = response.json()
+        
         # The API returns an array of editions if requested this way
         editions = data['data']
-        
         arabic_text = editions[0]['text']
         english_text = editions[1]['text']
         surah_name = editions[0]['surah']['englishName']

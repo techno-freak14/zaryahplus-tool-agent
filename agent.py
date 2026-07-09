@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 from dotenv import load_dotenv
 import google.generativeai as genai
 
@@ -38,16 +39,19 @@ def run_agent_loop(user_prompt: str):
     print(f"User Request: {user_prompt}")
     print("="*50 + "\n")
     
+    # Grab today's real date dynamically
+    today_date = datetime.datetime.now().strftime("%d-%m-%Y")
+    
     # Initialize a chat session using gemini-3.5-flash with our tools declared
     model = genai.GenerativeModel(
         model_name="gemini-3.5-flash",
         tools=available_tools,
         system_instruction=(
-            "You are an expert Islamic utility assistant. You have access to specialized tools "
-            "to answer calculations, dates, references, and prayer times. Always use the appropriate "
-            "tool if the user's request requires objective data. Never make up data or religious texts. "
-            "If a tool fails, report the error directly to the user. If no tool can handle the request, "
-            "politely refuse to answer."
+            f"You are an expert Islamic utility assistant. "
+            f"IMPORTANT CONTEXT: Today's real current date is {today_date}. "
+            "You have access to specialized tools to answer calculations, dates, references, and prayer times. "
+            "Always use the appropriate tool if the user's request requires objective data. Never make up data or religious texts. "
+            "If a tool fails, report the error directly to the user. If no tool can handle the request, politely refuse to answer."
         )
     )
     
@@ -62,18 +66,17 @@ def run_agent_loop(user_prompt: str):
     
     while iteration < max_iterations:
         iteration += 1
-        
-        # Flag to track if the model decided to act during this loop
         tool_was_called = False
+        function_responses = []
         
-        # Check through the response parts to see if the model wants to call a tool
-        if hasattr(response, 'parts'):
+        # Check through all response parts to collect parallel tool calls
+        if hasattr(response, 'parts') and response.parts:
             for part in response.parts:
                 if part.function_call:
                     tool_was_called = True
                     name = part.function_call.name
                     
-                    # Safely convert the protobuf arguments into a standard Python dictionary
+                    # Safely convert the arguments into a standard Python dictionary
                     args = {k: v for k, v in part.function_call.args.items()}
                     
                     # --- TRACE STEP ---
@@ -94,22 +97,21 @@ def run_agent_loop(user_prompt: str):
                     print(f"[TRACE - OBSERVE]")
                     print(f"  Tool Output: {observation}\n")
                     
-                    # Feed the observation back to the model as a function response 
-                    response = chat.send_message(
-                        genai.protos.Part(
-                            function_response=genai.protos.FunctionResponse(
-                                name=name,
-                                response={'result': observation}
-                            )
+                    # Package the result into a function response part
+                    func_resp = genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(
+                            name=name,
+                            response={'result': observation}
                         )
                     )
-                    
-                    # Break out of the parts loop to allow the main while loop to process the new response
-                    break 
+                    function_responses.append(func_resp)
         
-        # --- STOP CONDITION ---
-        # If we looped through all parts and no tool was called, we are done!
-        if not tool_was_called:
+        # If any tools were called during this turn, send all answers back together
+        if tool_was_called:
+            response = chat.send_message(function_responses)
+        else:
+            # --- STOP CONDITION ---
+            # If no tools were called, the agent is done and has formulated its final reply
             print("="*50)
             print("[FINAL ANSWER FROM AGENT]")
             print(response.text)
@@ -120,6 +122,6 @@ def run_agent_loop(user_prompt: str):
 
 # Quick inline testing block to try out the system
 if __name__ == "__main__":
-    # Test a query requiring tool chaining (Prayer times + Date conversion)
-    sample_query = "What are the prayer times for London today, and what is today's date converted to a Hijri date?"
+    # Test multi-tool parallel query matching the brief example
+    sample_query = "Prayer times for FakeCityName123."
     run_agent_loop(sample_query)
